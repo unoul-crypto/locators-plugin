@@ -12,6 +12,7 @@
       "maxDistance": 500.0,
       "targetTeam": "all",
       "cooldownSeconds": 30.0,
+      "cooldownMode": 1,
       "usePermission": "locators.use.basic",
       "givePermission": "locators.give.basic"
     },
@@ -27,6 +28,7 @@
       "maxDistance": 1000.0,
       "targetTeam": "all",
       "cooldownSeconds": 60.0,
+      "cooldownMode": 2,
       "usePermission": "locators.use.precise",
       "givePermission": "locators.give.precise"
     }

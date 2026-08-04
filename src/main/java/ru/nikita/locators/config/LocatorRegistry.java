@@ -85,6 +85,9 @@ public final class LocatorRegistry {
         validateNonNegative(definition.yawError(), prefix + ".yawError", errors);
         validateNonNegative(definition.pitchError(), prefix + ".pitchError", errors);
         validateNonNegative(definition.cooldownSeconds(), prefix + ".cooldownSeconds", errors);
+        if (definition.cooldownMode() != 1 && definition.cooldownMode() != 2) {
+            errors.add(prefix + ".cooldownMode: допустимы только значения 1 и 2");
+        }
         if (!Double.isFinite(definition.maxDistance()) || definition.maxDistance() <= 0) {
             errors.add(prefix + ".maxDistance: должно быть конечным числом больше 0");
         }

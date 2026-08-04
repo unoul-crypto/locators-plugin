@@ -18,6 +18,7 @@ public final class LocatorDefinition {
     private double maxDistance;
     private String targetTeam;
     private double cooldownSeconds;
+    private int cooldownMode;
     private String usePermission;
     private String givePermission;
 
@@ -63,6 +64,13 @@ public final class LocatorDefinition {
 
     public double cooldownSeconds() {
         return cooldownSeconds;
+    }
+
+    /**
+     * Missing values from configurations created before 1.1.0 are treated as mode 1.
+     */
+    public int cooldownMode() {
+        return cooldownMode == 0 ? 1 : cooldownMode;
     }
 
     public String usePermission() {
