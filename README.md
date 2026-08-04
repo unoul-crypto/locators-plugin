@@ -10,14 +10,6 @@
 - Java, требуемая самим сервером; байткод плагина совместим с Java 8+
 - Maven 3.9+
 
-Сборка в PowerShell:
-
-```powershell
-$env:JAVA_HOME='%USERPROFILE%\Documents\jdk-25.0.3'
-$env:Path="$env:JAVA_HOME\bin;$env:Path"
-& '%USERPROFILE%\Documents\apache-maven-3.9.16\bin\mvn.cmd' clean package
-```
-
 Готовый файл: `target/Locators-1.0.1.jar`. Поместите его в `plugins` сервера и перезапустите сервер.
 При первом запуске появится `plugins/Locators/locators.json`.
 
