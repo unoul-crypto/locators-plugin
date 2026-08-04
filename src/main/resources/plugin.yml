@@ -1,0 +1,13 @@
+name: Locators
+version: '1.0.1'
+main: dev.locators.LocatorsPlugin
+api-version: '1.16'
+description: Настраиваемые предметы-локаторы для поиска игроков
+commands:
+  locators:
+    description: Управление локаторами
+    usage: /locators <give|reload>
+permissions:
+  locators.reload:
+    description: Перезагрузка locators.json
+    default: op
