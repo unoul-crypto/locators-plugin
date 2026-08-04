@@ -10,29 +10,28 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Team;
+import dev.locators.config.CooldownStore;
 import dev.locators.config.LocatorRegistry;
 import dev.locators.item.LocatorItemService;
 import dev.locators.model.LocatorDefinition;
 import dev.locators.util.Angles;
 
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class LocatorUseListener implements Listener {
-    private static final double NANOS_PER_SECOND = 1_000_000_000.0;
-
     private final LocatorRegistry registry;
     private final LocatorItemService itemService;
-    private final Map<CooldownKey, Long> cooldowns = new HashMap<>();
+    private final CooldownStore cooldownStore;
 
-    public LocatorUseListener(LocatorRegistry registry, LocatorItemService itemService) {
+    public LocatorUseListener(LocatorRegistry registry, LocatorItemService itemService, CooldownStore cooldownStore) {
         this.registry = registry;
         this.itemService = itemService;
+        this.cooldownStore = cooldownStore;
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = false)
@@ -59,26 +58,73 @@ public final class LocatorUseListener implements Listener {
             return;
         }
 
-        CooldownKey key = new CooldownKey(player.getUniqueId(), locator.id().toLowerCase(Locale.ROOT));
-        long now = System.nanoTime();
-        long readyAt = cooldowns.getOrDefault(key, 0L);
-        if (readyAt > now) {
-            double remaining = (readyAt - now) / NANOS_PER_SECOND;
+        long now = System.currentTimeMillis();
+        UUID instanceId = null;
+        long remainingMillis;
+        if (locator.cooldownMode() == 2) {
+            instanceId = prepareIndividualItem(player);
+            remainingMillis = cooldownStore.remainingItemMillis(instanceId, now);
+        } else {
+            remainingMillis = cooldownStore.remainingTypeMillis(player.getUniqueId(), locator.id(), now);
+        }
+
+        if (remainingMillis > 0) {
             player.sendMessage(ChatColor.YELLOW + String.format(Locale.US,
-                    "Локатор перезаряжается. Осталось %.1f сек.", remaining));
+                    "Локатор перезаряжается. Осталось %.1f сек.", remainingMillis / 1000.0));
             return;
         }
 
-        long cooldownNanos = (long) (locator.cooldownSeconds() * NANOS_PER_SECOND);
-        cooldowns.put(key, now + cooldownNanos);
+        long readyAt = calculateReadyAt(now, locator.cooldownSeconds());
+        if (locator.cooldownMode() == 2) {
+            cooldownStore.startItem(instanceId, readyAt);
+        } else {
+            cooldownStore.startType(player.getUniqueId(), locator.id(), readyAt);
+        }
         showResults(player, locator);
+    }
+
+    /**
+     * Mode 2 items are normally issued one by one. This also safely migrates a
+     * legacy stacked locator by separating the currently held item from its stack.
+     */
+    private UUID prepareIndividualItem(Player player) {
+        ItemStack held = player.getInventory().getItemInMainHand();
+        if (held.getAmount() > 1) {
+            ItemStack remainder = held.clone();
+            remainder.setAmount(held.getAmount() - 1);
+            itemService.clearInstanceId(remainder);
+
+            ItemStack individual = held.clone();
+            individual.setAmount(1);
+            UUID instanceId = itemService.getOrCreateInstanceId(individual);
+            player.getInventory().setItemInMainHand(individual);
+
+            Map<Integer, ItemStack> leftovers = player.getInventory().addItem(remainder);
+            for (ItemStack leftover : leftovers.values()) {
+                player.getWorld().dropItemNaturally(player.getLocation(), leftover);
+            }
+            return instanceId;
+        }
+
+        UUID instanceId = itemService.getOrCreateInstanceId(held);
+        player.getInventory().setItemInMainHand(held);
+        return instanceId;
+    }
+
+    private long calculateReadyAt(long now, double cooldownSeconds) {
+        double durationMillis = cooldownSeconds * 1000.0;
+        if (durationMillis >= Long.MAX_VALUE - now) {
+            return Long.MAX_VALUE;
+        }
+        return now + (long) durationMillis;
     }
 
     private void showResults(Player user, LocatorDefinition locator) {
         int found = 0;
         user.sendMessage(ChatColor.AQUA + "Результаты локатора «" + locator.id() + "»:");
         for (Player target : Bukkit.getOnlinePlayers()) {
-            if (target.equals(user) || !target.getWorld().equals(user.getWorld()) || !matchesTeam(target, locator.targetTeam())) {
+            if (target.equals(user) || !target.getWorld().equals(user.getWorld())
+                    || !matchesTeam(target, locator.targetTeam())) {
                 continue;
             }
 
@@ -145,32 +191,5 @@ public final class LocatorUseListener implements Listener {
 
     private boolean hasPermission(Player player, String permission) {
         return permission.trim().isEmpty() || player.hasPermission(permission);
-    }
-
-    private static final class CooldownKey {
-        private final UUID playerId;
-        private final String locatorId;
-
-        private CooldownKey(UUID playerId, String locatorId) {
-            this.playerId = playerId;
-            this.locatorId = locatorId;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (!(other instanceof CooldownKey)) {
-                return false;
-            }
-            CooldownKey that = (CooldownKey) other;
-            return playerId.equals(that.playerId) && locatorId.equals(that.locatorId);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(playerId, locatorId);
-        }
     }
 }

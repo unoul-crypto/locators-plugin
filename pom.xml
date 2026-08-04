@@ -6,7 +6,7 @@
 
     <groupId>dev.locators</groupId>
     <artifactId>locator-plugin</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <name>Locators</name>
     <description>Configurable player locator items for Paper</description>
 
@@ -15,6 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spigot.version>1.16.5-R0.1-SNAPSHOT</spigot.version>
         <gson.version>2.13.1</gson.version>
+        <junit.version>5.13.4</junit.version>
     </properties>
 
     <repositories>
@@ -35,6 +36,12 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${gson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

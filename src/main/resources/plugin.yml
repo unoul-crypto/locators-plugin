@@ -1,5 +1,5 @@
 name: Locators
-version: '1.0.1'
+version: '1.1.0'
 main: dev.locators.LocatorsPlugin
 api-version: '1.16'
 description: Настраиваемые предметы-локаторы для поиска игроков
@@ -7,7 +7,11 @@ commands:
   locators:
     description: Управление локаторами
     usage: /locators <give|reload>
+    aliases: [locator]
 permissions:
   locators.reload:
     description: Перезагрузка locators.json
+    default: op
+  locators.resetcooldown:
+    description: Сброс cooldown локаторов режима 1
     default: op
