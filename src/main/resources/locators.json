@@ -1,0 +1,34 @@
+{
+  "locators": [
+    {
+      "id": "basic",
+      "item": "minecraft:compass",
+      "showDistance": true,
+      "distanceError": 10.0,
+      "showYaw": true,
+      "yawError": 5.0,
+      "showPitch": false,
+      "pitchError": 0.0,
+      "maxDistance": 500.0,
+      "targetTeam": "all",
+      "cooldownSeconds": 30.0,
+      "usePermission": "locators.use.basic",
+      "givePermission": "locators.give.basic"
+    },
+    {
+      "id": "precise",
+      "item": "minecraft:clock",
+      "showDistance": true,
+      "distanceError": 1.0,
+      "showYaw": true,
+      "yawError": 1.0,
+      "showPitch": true,
+      "pitchError": 1.0,
+      "maxDistance": 1000.0,
+      "targetTeam": "all",
+      "cooldownSeconds": 60.0,
+      "usePermission": "locators.use.precise",
+      "givePermission": "locators.give.precise"
+    }
+  ]
+}
