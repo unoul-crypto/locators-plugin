@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-/** One-time, player-bound tokens used by clickable chat angles. */
+/** Short-lived, player-bound tokens used by clickable chat angles. */
 public final class TurnRequestStore {
     private static final long DEFAULT_TTL_MILLIS = 120_000L;
 
@@ -29,7 +29,7 @@ public final class TurnRequestStore {
         return create(playerId, null, pitch);
     }
 
-    public Optional<TurnRequest> consume(UUID playerId, String token) {
+    public Optional<TurnRequest> resolve(UUID playerId, String token) {
         long now = System.currentTimeMillis();
         StoredRequest stored = requests.get(token);
         if (stored == null) {
@@ -42,7 +42,6 @@ public final class TurnRequestStore {
         if (!stored.playerId.equals(playerId)) {
             return Optional.empty();
         }
-        requests.remove(token);
         return Optional.of(new TurnRequest(stored.yaw, stored.pitch));
     }
 

@@ -75,10 +75,10 @@ public final class LocatorsCommand implements CommandExecutor, TabCompleter {
         }
         Player player = (Player) sender;
         TurnRequestStore.TurnRequest request = turnRequestStore
-                .consume(player.getUniqueId(), token)
+                .resolve(player.getUniqueId(), token)
                 .orElse(null);
         if (request == null) {
-            player.sendMessage(ChatColor.RED + "Ссылка на угол устарела или уже была использована.");
+            player.sendMessage(ChatColor.RED + "Ссылка на угол устарела.");
             return true;
         }
 
