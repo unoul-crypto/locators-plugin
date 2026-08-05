@@ -1,5 +1,9 @@
 package ru.nikita.locators.listener;
 
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -17,6 +21,7 @@ import ru.nikita.locators.config.LocatorRegistry;
 import ru.nikita.locators.item.LocatorItemService;
 import ru.nikita.locators.model.LocatorDefinition;
 import ru.nikita.locators.util.Angles;
+import ru.nikita.locators.util.TurnRequestStore;
 
 import java.util.Locale;
 import java.util.Map;
@@ -27,11 +32,14 @@ public final class LocatorUseListener implements Listener {
     private final LocatorRegistry registry;
     private final LocatorItemService itemService;
     private final CooldownStore cooldownStore;
+    private final TurnRequestStore turnRequestStore;
 
-    public LocatorUseListener(LocatorRegistry registry, LocatorItemService itemService, CooldownStore cooldownStore) {
+    public LocatorUseListener(LocatorRegistry registry, LocatorItemService itemService, CooldownStore cooldownStore,
+                              TurnRequestStore turnRequestStore) {
         this.registry = registry;
         this.itemService = itemService;
         this.cooldownStore = cooldownStore;
+        this.turnRequestStore = turnRequestStore;
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = false)
@@ -135,23 +143,29 @@ public final class LocatorUseListener implements Listener {
                 continue;
             }
 
-            StringBuilder line = new StringBuilder(ChatColor.GREEN + " • " + target.getName());
+            TextComponent line = new TextComponent(" • " + target.getName());
+            line.setColor(net.md_5.bungee.api.ChatColor.GREEN);
             if (locator.showDistance()) {
                 double distance = Math.max(0, randomize(trueDistance, locator.distanceError()));
-                line.append(ChatColor.WHITE).append(String.format(Locale.US,
-                        " | расстояние: ~%.1f блоков", distance));
+                line.addExtra(plainComponent(String.format(Locale.US,
+                        " | расстояние: ~%.1f блоков", distance)));
             }
             if (locator.showYaw()) {
                 double yaw = Angles.difference(Angles.yawTo(from, to), from.getYaw());
                 yaw = Angles.normalize(randomize(yaw, locator.yawError()));
-                line.append(ChatColor.WHITE).append(" | yaw: ").append(horizontalDirection(yaw));
+                float absoluteYaw = (float) Angles.normalize(from.getYaw() + yaw);
+                String token = turnRequestStore.createYaw(user.getUniqueId(), absoluteYaw);
+                line.addExtra(clickableAngle(" | yaw: " + horizontalDirection(yaw), token));
             }
             if (locator.showPitch()) {
                 double pitch = Angles.difference(Angles.pitchTo(from, to), from.getPitch());
                 pitch = Angles.normalize(randomize(pitch, locator.pitchError()));
-                line.append(ChatColor.WHITE).append(" | pitch: ").append(verticalDirection(pitch));
+                float absolutePitch = (float) Math.max(-90.0, Math.min(90.0, from.getPitch() + pitch));
+                pitch = absolutePitch - from.getPitch();
+                String token = turnRequestStore.createPitch(user.getUniqueId(), absolutePitch);
+                line.addExtra(clickableAngle(" | pitch: " + verticalDirection(pitch), token));
             }
-            user.sendMessage(line.toString());
+            user.spigot().sendMessage(line);
             found++;
         }
 
@@ -187,6 +201,24 @@ public final class LocatorUseListener implements Listener {
             return "прямо";
         }
         return String.format(Locale.US, "%.1f° %s", Math.abs(angle), angle > 0 ? "вниз" : "вверх");
+    }
+
+    private TextComponent plainComponent(String text) {
+        TextComponent component = new TextComponent(text);
+        component.setColor(net.md_5.bungee.api.ChatColor.WHITE);
+        return component;
+    }
+
+    private TextComponent clickableAngle(String text, String token) {
+        TextComponent component = new TextComponent(text);
+        component.setColor(net.md_5.bungee.api.ChatColor.AQUA);
+        component.setUnderlined(true);
+        component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/locator turn " + token));
+        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                new ComponentBuilder("Нажмите, чтобы повернуть камеру")
+                        .color(net.md_5.bungee.api.ChatColor.YELLOW)
+                        .create()));
+        return component;
     }
 
     private boolean hasPermission(Player player, String permission) {
