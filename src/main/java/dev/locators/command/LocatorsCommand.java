@@ -2,6 +2,7 @@ package dev.locators.command;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,6 +16,7 @@ import dev.locators.config.LocatorConfigException;
 import dev.locators.config.LocatorRegistry;
 import dev.locators.item.LocatorItemService;
 import dev.locators.model.LocatorDefinition;
+import dev.locators.util.TurnRequestStore;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,17 +35,22 @@ public final class LocatorsCommand implements CommandExecutor, TabCompleter {
     private final LocatorRegistry registry;
     private final LocatorItemService itemService;
     private final CooldownStore cooldownStore;
+    private final TurnRequestStore turnRequestStore;
 
     public LocatorsCommand(LocatorsPlugin plugin, LocatorRegistry registry, LocatorItemService itemService,
-                           CooldownStore cooldownStore) {
+                           CooldownStore cooldownStore, TurnRequestStore turnRequestStore) {
         this.plugin = plugin;
         this.registry = registry;
         this.itemService = itemService;
         this.cooldownStore = cooldownStore;
+        this.turnRequestStore = turnRequestStore;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length == 2 && args[0].equalsIgnoreCase("turn")) {
+            return turn(sender, args[1]);
+        }
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             return reload(sender);
         }
@@ -58,6 +65,33 @@ public final class LocatorsCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatColor.GRAY + "/locators give <игрок> <id> <количество>");
         sender.sendMessage(ChatColor.GRAY + "/locators reload");
         sender.sendMessage(ChatColor.GRAY + "/locator resetTypeCooldown <тип|*> <UUID|ник|*>");
+        return true;
+    }
+
+    private boolean turn(CommandSender sender, String token) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ChatColor.RED + "Повернуть камеру можно только игроку.");
+            return true;
+        }
+        Player player = (Player) sender;
+        TurnRequestStore.TurnRequest request = turnRequestStore
+                .consume(player.getUniqueId(), token)
+                .orElse(null);
+        if (request == null) {
+            player.sendMessage(ChatColor.RED + "Ссылка на угол устарела или уже была использована.");
+            return true;
+        }
+
+        Location location = player.getLocation();
+        if (request.yaw() != null) {
+            location.setYaw(request.yaw());
+        }
+        if (request.pitch() != null) {
+            location.setPitch(request.pitch());
+        }
+        if (!player.teleport(location)) {
+            player.sendMessage(ChatColor.RED + "Не удалось повернуть камеру: телепортация отменена.");
+        }
         return true;
     }
 

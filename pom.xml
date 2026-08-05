@@ -6,7 +6,7 @@
 
     <groupId>dev.locators</groupId>
     <artifactId>locator-plugin</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <name>Locators</name>
     <description>Configurable player locator items for Paper</description>
 

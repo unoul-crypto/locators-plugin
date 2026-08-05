@@ -8,6 +8,7 @@ import dev.locators.config.LocatorConfigException;
 import dev.locators.config.LocatorRegistry;
 import dev.locators.item.LocatorItemService;
 import dev.locators.listener.LocatorUseListener;
+import dev.locators.util.TurnRequestStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,13 +44,16 @@ public final class LocatorsPlugin extends JavaPlugin {
         }
 
         LocatorItemService itemService = new LocatorItemService(this);
-        getServer().getPluginManager().registerEvents(new LocatorUseListener(registry, itemService, cooldownStore), this);
+        TurnRequestStore turnRequestStore = new TurnRequestStore();
+        getServer().getPluginManager().registerEvents(
+                new LocatorUseListener(registry, itemService, cooldownStore, turnRequestStore), this);
 
         PluginCommand command = getCommand("locators");
         if (command == null) {
             throw new IllegalStateException("Команда locators отсутствует в plugin.yml");
         }
-        LocatorsCommand commandHandler = new LocatorsCommand(this, registry, itemService, cooldownStore);
+        LocatorsCommand commandHandler = new LocatorsCommand(
+                this, registry, itemService, cooldownStore, turnRequestStore);
         command.setExecutor(commandHandler);
         command.setTabCompleter(commandHandler);
 
