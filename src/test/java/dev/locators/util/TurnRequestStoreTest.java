@@ -10,15 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class TurnRequestStoreTest {
     @Test
-    void tokenIsBoundToPlayerAndCanOnlyBeUsedOnce() {
+    void tokenIsBoundToPlayerAndCanBeUsedRepeatedly() {
         TurnRequestStore store = new TurnRequestStore();
         UUID owner = UUID.randomUUID();
         String token = store.createYaw(owner, 45.0f);
 
-        assertFalse(store.consume(UUID.randomUUID(), token).isPresent());
-        TurnRequestStore.TurnRequest request = store.consume(owner, token).get();
+        assertFalse(store.resolve(UUID.randomUUID(), token).isPresent());
+        TurnRequestStore.TurnRequest request = store.resolve(owner, token).get();
         assertEquals(45.0f, request.yaw());
-        assertFalse(store.consume(owner, token).isPresent());
+        assertTrue(store.resolve(owner, token).isPresent());
     }
 
     @Test
@@ -27,7 +27,7 @@ final class TurnRequestStoreTest {
         UUID owner = UUID.randomUUID();
         String token = store.createPitch(owner, -20.0f);
 
-        assertFalse(store.consume(owner, token).isPresent());
+        assertFalse(store.resolve(owner, token).isPresent());
     }
 
     @Test
@@ -35,7 +35,7 @@ final class TurnRequestStoreTest {
         TurnRequestStore store = new TurnRequestStore();
         UUID owner = UUID.randomUUID();
         String token = store.createPitch(owner, -20.0f);
-        TurnRequestStore.TurnRequest request = store.consume(owner, token).get();
+        TurnRequestStore.TurnRequest request = store.resolve(owner, token).get();
 
         assertTrue(request.yaw() == null);
         assertEquals(-20.0f, request.pitch());
