@@ -91,8 +91,12 @@ public final class LocatorRegistry {
         if (!Double.isFinite(definition.maxDistance()) || definition.maxDistance() <= 0) {
             errors.add(prefix + ".maxDistance: должно быть конечным числом больше 0");
         }
-        if (isBlank(definition.targetTeam())) {
-            errors.add(prefix + ".targetTeam: укажите имя команды или \"all\"");
+        String targetMode = definition.targetMode().toLowerCase(Locale.ROOT);
+        if (!targetMode.equals("scoreboard_tag") && !targetMode.equals("luckperms_group")) {
+            errors.add(prefix + ".targetMode: допустимы только \"scoreboard_tag\" и \"luckperms_group\"");
+        }
+        if (isBlank(definition.target())) {
+            errors.add(prefix + ".target: укажите имя тега/группы или \"all\"");
         }
         if (definition.usePermission() == null) {
             errors.add(prefix + ".usePermission: укажите право или пустую строку");

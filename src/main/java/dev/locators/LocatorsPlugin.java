@@ -6,6 +6,7 @@ import dev.locators.command.LocatorsCommand;
 import dev.locators.config.CooldownStore;
 import dev.locators.config.LocatorConfigException;
 import dev.locators.config.LocatorRegistry;
+import dev.locators.filter.TargetFilterService;
 import dev.locators.item.LocatorItemService;
 import dev.locators.listener.LocatorUseListener;
 import dev.locators.util.TurnRequestStore;
@@ -45,8 +46,10 @@ public final class LocatorsPlugin extends JavaPlugin {
 
         LocatorItemService itemService = new LocatorItemService(this);
         TurnRequestStore turnRequestStore = new TurnRequestStore();
+        TargetFilterService targetFilterService = new TargetFilterService(this);
         getServer().getPluginManager().registerEvents(
-                new LocatorUseListener(registry, itemService, cooldownStore, turnRequestStore), this);
+                new LocatorUseListener(registry, itemService, cooldownStore, turnRequestStore, targetFilterService),
+                this);
 
         PluginCommand command = getCommand("locators");
         if (command == null) {

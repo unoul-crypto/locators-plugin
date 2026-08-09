@@ -16,6 +16,9 @@ public final class LocatorDefinition {
     private boolean showPitch;
     private double pitchError;
     private double maxDistance;
+    private String targetMode;
+    private String target;
+    // Legacy field: configurations before 1.3.0 used scoreboard teams.
     private String targetTeam;
     private double cooldownSeconds;
     private int cooldownMode;
@@ -58,7 +61,14 @@ public final class LocatorDefinition {
         return maxDistance;
     }
 
-    public String targetTeam() {
+    public String targetMode() {
+        return targetMode == null || targetMode.trim().isEmpty() ? "scoreboard_tag" : targetMode;
+    }
+
+    public String target() {
+        if (target != null && !target.trim().isEmpty()) {
+            return target;
+        }
         return targetTeam;
     }
 

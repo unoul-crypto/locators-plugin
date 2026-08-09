@@ -15,9 +15,9 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scoreboard.Team;
 import dev.locators.config.CooldownStore;
 import dev.locators.config.LocatorRegistry;
+import dev.locators.filter.TargetFilterService;
 import dev.locators.item.LocatorItemService;
 import dev.locators.model.LocatorDefinition;
 import dev.locators.util.Angles;
@@ -33,13 +33,15 @@ public final class LocatorUseListener implements Listener {
     private final LocatorItemService itemService;
     private final CooldownStore cooldownStore;
     private final TurnRequestStore turnRequestStore;
+    private final TargetFilterService targetFilterService;
 
     public LocatorUseListener(LocatorRegistry registry, LocatorItemService itemService, CooldownStore cooldownStore,
-                              TurnRequestStore turnRequestStore) {
+                              TurnRequestStore turnRequestStore, TargetFilterService targetFilterService) {
         this.registry = registry;
         this.itemService = itemService;
         this.cooldownStore = cooldownStore;
         this.turnRequestStore = turnRequestStore;
+        this.targetFilterService = targetFilterService;
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = false)
@@ -132,7 +134,7 @@ public final class LocatorUseListener implements Listener {
         user.sendMessage(ChatColor.AQUA + "Результаты локатора «" + locator.id() + "»:");
         for (Player target : Bukkit.getOnlinePlayers()) {
             if (target.equals(user) || !target.getWorld().equals(user.getWorld())
-                    || !matchesTeam(target, locator.targetTeam())) {
+                    || !targetFilterService.matches(target, locator)) {
                 continue;
             }
 
@@ -172,14 +174,6 @@ public final class LocatorUseListener implements Listener {
         if (found == 0) {
             user.sendMessage(ChatColor.GRAY + "Подходящие игроки не найдены.");
         }
-    }
-
-    private boolean matchesTeam(Player target, String requiredTeam) {
-        if (requiredTeam.equalsIgnoreCase("all")) {
-            return true;
-        }
-        Team team = Bukkit.getScoreboardManager().getMainScoreboard().getEntryTeam(target.getName());
-        return team != null && team.getName().equalsIgnoreCase(requiredTeam);
     }
 
     private double randomize(double value, double error) {

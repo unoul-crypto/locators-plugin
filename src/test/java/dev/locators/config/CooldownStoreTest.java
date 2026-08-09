@@ -26,6 +26,20 @@ final class CooldownStoreTest {
     }
 
     @Test
+    void legacyTargetTeamBecomesScoreboardTag() {
+        LocatorDefinition legacy = new Gson().fromJson("{\"targetTeam\":\"enemy\"}",
+                LocatorDefinition.class);
+        LocatorDefinition luckPerms = new Gson().fromJson(
+                "{\"targetMode\":\"luckperms_group\",\"target\":\"hunter\"}",
+                LocatorDefinition.class);
+
+        assertEquals("scoreboard_tag", legacy.targetMode());
+        assertEquals("enemy", legacy.target());
+        assertEquals("luckperms_group", luckPerms.targetMode());
+        assertEquals("hunter", luckPerms.target());
+    }
+
+    @Test
     void savesAndLoadsBothCooldownModes() throws Exception {
         Path file = temporaryDirectory.resolve("cooldowns.json");
         UUID playerId = UUID.randomUUID();
